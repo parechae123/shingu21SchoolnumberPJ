@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;           //유니티 UI 접근
 using UnityEngine.Networking;   //유니티 Networking 사용
-using Newtonsoft.Json;
 using System.Text;
 
 public class RankMain : MonoBehaviour
@@ -20,6 +19,8 @@ public class RankMain : MonoBehaviour
     public Button BtnGetId;
     public Button BtnPost;
 
+    Dictionary<string, int> scoreDic = new Dictionary<string, int>();
+
     void Start()
     {
         this.BtnGetId.onClick.AddListener(() =>
@@ -29,7 +30,8 @@ public class RankMain : MonoBehaviour
 
             StartCoroutine(this.GetId(url, (raw) =>
             {              
-                var res = JsonConvert.DeserializeObject<Protocols.Packets.res_scores_id>(raw);
+                //var res = JsonConvert.DeserializeObject<Protocols.Packets.res_scores_id>(raw);
+                var res = JsonUtility.FromJson<Protocols.Packets.res_scores_id>(raw);
                 Debug.LogFormat("{0}, {1}", res.result.id, res.result.score);
 
             }));
@@ -42,12 +44,16 @@ public class RankMain : MonoBehaviour
             Debug.Log(url);
 
             StartCoroutine(this.GetId(url, (raw) =>
-            {                
-                var res = JsonConvert.DeserializeObject<Protocols.Packets.res_scores_top3>(raw);
+            {
+                //var res = JsonConvert.DeserializeObject<Protocols.Packets.res_scores_top3>(raw);
+                Protocols.Packets.res_scores_top3 res = JsonUtility.FromJson<Protocols.Packets.res_scores_top3>(raw);
+
+                Debug.LogFormat("{0}, {1}", res.cmd, res.result.Length);
                 foreach (var user in res.result)
                 {
                     Debug.LogFormat("{0} : {1}", user.id, user.score);
                 }
+
             }));
         });
 
@@ -60,12 +66,14 @@ public class RankMain : MonoBehaviour
             req.cmd = 1000;
             req.id = id;
             req.score = score;
-            var json = JsonConvert.SerializeObject(req);
+            //var json = JsonConvert.SerializeObject(req);
+            var json = JsonUtility.ToJson(req);
             Debug.Log(json);
 
             StartCoroutine(this.PostScore(url, json, (raw) =>
             {              
-                Protocols.Packets.res_scores res = JsonConvert.DeserializeObject<Protocols.Packets.res_scores>(raw);
+                //Protocols.Packets.res_scores res = JsonConvert.DeserializeObject<Protocols.Packets.res_scores>(raw);
+                Protocols.Packets.res_scores res = JsonUtility.FromJson<Protocols.Packets.res_scores_id>(raw);
                 Debug.LogFormat("{0}, {1}", res.cmd, res.message);
             }));
 
@@ -78,9 +86,10 @@ public class RankMain : MonoBehaviour
         var webRequest = new UnityWebRequest(url, "POST");
         var bodyRaw = Encoding.UTF8.GetBytes(json);                         //직렬화 (문자열 -> 바이트 배열)
 
+       
         webRequest.uploadHandler = new UploadHandlerRaw(bodyRaw);
         webRequest.downloadHandler = new DownloadHandlerBuffer();
-        webRequest.SetRequestHeader("Contect-Type", "application/json");
+        webRequest.SetRequestHeader("Content-Type", "application/json");
 
         yield return webRequest.SendWebRequest();                           //Node.js 로 보냄
 
@@ -94,6 +103,8 @@ public class RankMain : MonoBehaviour
             Debug.LogFormat("{0}/{1}/{2}/", webRequest.responseCode, webRequest.downloadHandler.data, webRequest.downloadHandler.text);
             callback(webRequest.downloadHandler.text);
         }
+
+        webRequest.uploadHandler.Dispose();
     }
 
     private IEnumerator GetId(string url, System.Action<string> callback)

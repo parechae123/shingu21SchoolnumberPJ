@@ -15,19 +15,23 @@ public class Protocols
             public string id;
             public int score;
         }
+
         public class res_scores : common
         {
             public string message;
         }
+
         public class user
         {
             public string id;
             public int score;
         }
+
         public class res_scores_top3 : res_scores
         {
             public user[] result;
         }
+
         public class res_scores_id : res_scores
         {
             public user result;
