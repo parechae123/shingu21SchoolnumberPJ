@@ -18,7 +18,7 @@ public class SceneManager : MonoBehaviour
         }
     }
 
-    public Dictionary<string, BaseScene> sceneDictionary = new Dictionary<string, BaseScene>();
+    public SerializableDictionary<string, BaseScene> sceneDictionary = new SerializableDictionary<string, BaseScene>();
     private string currentSceneName = null;
 
     private void Awake()
@@ -39,7 +39,7 @@ public class SceneManager : MonoBehaviour
             currentSceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
         }
 
-        RegisterScene(currentSceneName);
+        //RegisterScene(currentSceneName);
 
     }
 
